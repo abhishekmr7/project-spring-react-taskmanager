@@ -1,0 +1,86 @@
+package TaskService;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.Taskmanager.TaskManagerProject.model.Status;
+import com.Taskmanager.TaskManagerProject.model.Task;
+
+import TaskRepository.TaskRepository;
+
+@Service
+@Transactional
+public class TaskService {
+
+    private final TaskRepository repository;
+
+    public TaskService(TaskRepository repository) {
+        this.repository = repository;
+    }
+
+    public Task create(Task task) {
+        
+        task.setId(null);
+       
+        if (task.getStatus() == null) {
+            task.setStatus(Status.PENDING);
+        }
+        return repository.save(task);
+    }
+
+    @Transactional(readOnly = true)
+    public Task getById(Long id) {
+        return repository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Task> getAll() {
+        return repository.findAll();
+    }
+
+    public Task update(Long id, Task incoming) {
+        Task existing = getById(id);
+        existing.setTitle(incoming.getTitle());
+        existing.setDescription(incoming.getDescription());
+        existing.setStatus(incoming.getStatus());
+        existing.setDueDate(incoming.getDueDate());
+        return repository.save(existing);
+    }
+
+    public Task updateStatus(Long id, Status status) {
+        Task existing = getById(id);
+        existing.setStatus(status);
+        return repository.save(existing);
+    }
+
+    public void delete(Long id) {
+        Task existing = getById(id);
+        repository.delete(existing);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Task> getByStatus(Status status, Pageable pageable) {
+        return repository.findByStatus(status, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Task> getByDueDate(LocalDate date) {
+        return repository.findByDueDate(date);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Task> getOverdueExcludingStatus(LocalDate beforeDate, Status excludeStatus) {
+        return repository.findByDueDateBeforeAndStatusNot(beforeDate, excludeStatus);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Task> searchByTitle(String titlePart) {
+        return repository.findByTitleContainingIgnoreCase(titlePart);
+    }
+}

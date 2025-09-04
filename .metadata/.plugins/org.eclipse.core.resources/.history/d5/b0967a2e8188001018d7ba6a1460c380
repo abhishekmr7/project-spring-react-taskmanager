@@ -1,0 +1,26 @@
+package TaskRepository;
+
+import java.awt.print.Pageable;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.hibernate.query.Page;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.Taskmanager.TaskManagerProject.model.Task;
+
+import ch.qos.logback.core.status.Status;
+
+@Repository
+
+public interface TaskRepository extends JpaRepository<Task, Long> {
+
+    // Both variants are fine (paged & non-paged):
+    List<Task> findByStatus(Status status);
+    Page findByStatus(Status status, Pageable pageable);
+
+    List<Task> findByDueDate(LocalDate dueDate);
+    List<Task> findByDueDateBeforeAndStatusNot(LocalDate date, Status status);
+    List<Task> findByTitleContainingIgnoreCase(String titlePart);
+}
